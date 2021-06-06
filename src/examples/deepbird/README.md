@@ -10,8 +10,13 @@ First version is just me messing about with the APIs.
 It's highly recommended to not develop on the Pi Zero itself, which
 is a little underpowered for the task. Instead, ssh into it from another
 machine for your everyday commandline work. For example, if you haven't changed the defaults:
+    
     ssh pi@raspberrypi
 
 (password `raspberry`).
+
+## APIs
+
+The APIs are documented here https://aiyprojects.readthedocs.io/en/latest/.
 
 
