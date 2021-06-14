@@ -3,7 +3,7 @@
 
 import io
 
-from aiy.vision.inference import CameraInference
+from aiy.vision.inference import CameraInference, InferenceEngine
 from aiy.vision.models import face_detection
 
 from PIL import Image, ImageDraw
@@ -16,12 +16,16 @@ def main():
     with PiCamera() as camera:
         # Configure camera
         camera.resolution = (1640, 922)  # Full Frame, 16:9 (Camera v2)
-        camera.start_preview()
+        #camera.start_preview()
         print("Running")
 
         # Do inference on VisionBonnet
+        foo = InferenceEngine()
+        foo.stop_camera_inference()
+        foo.close()
         with CameraInference(face_detection.model()) as inference:
             for result in inference.run():
+                print("got result")
                 faces = face_detection.get_faces(result)
                 if len(faces) >= 1:
                     print("Found %d faces!" % len(faces))
@@ -39,7 +43,7 @@ def main():
                     pic_cnt = pic_cnt + 1
 
         # Stop preview
-        camera.stop_preview()
+        #camera.stop_preview()
 
 
 if __name__ == '__main__':
