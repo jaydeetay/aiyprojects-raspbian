@@ -16,8 +16,11 @@
 # Heavily inspired, even copied from the utilities used to build the
 # Joy Detection Demo.
 
+import io
 from service_utils import Service
 from picamera import PiCamera
+import os
+import time
 
 class Photographer(Service):
     """A service used to take photos from the camera and save them to disk."""
@@ -25,7 +28,7 @@ class Photographer(Service):
         super().__init__()
         assert format in ('jpeg', 'bmp', 'png')
 
-        self._font = ImageFont.truetype(FONT_FILE, size=25)
+        #self._font = ImageFont.truetype(FONT_FILE, size=25) 
         self._format = format
         self._folder = folder
 
@@ -50,10 +53,11 @@ class Photographer(Service):
 
 if __name__ == "__main__":
     print("How to save a camera shot")
+    print("(Need to run this directly on the Pi)")
     with PiCamera(sensor_mode=4, resolution=(820, 616)) as camera:
         
     # camera = stack.enter_context(PiCamera(sensor_mode=4, resolution=(820, 616)))
-        with Photographer("jpeg", "tmp") as photographer:
+        with Photographer("jpeg", "/tmp") as photographer:
             photographer.shoot(camera)
             photographer.shoot(camera)
 
