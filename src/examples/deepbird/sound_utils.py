@@ -42,7 +42,7 @@ class Player(Service):
     def play(self, sound):
         self.submit(sound)
 
-HIGH_COLOR = (255, 70, 0)
+HIGH_COLOR = (0, 255, 0)
 LOW_COLOR = (0, 0, 64)
 
 class LedAnimator(Service):

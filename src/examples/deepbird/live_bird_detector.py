@@ -23,13 +23,9 @@ from sound_utils import Player, LedAnimator
 
 logger = logging.getLogger(__name__)
 
-
-
 #JOY_SCORE_HIGH = 0.85
 #JOY_SCORE_LOW = 0.10
 
-#JOY_SOUND = ('C5q', 'E5q', 'C6q')
-#SAD_SOUND = ('C6q', 'E5q', 'C5q')
 WHO_LET_THE_SOUND = (
         'G5q',
         'G5e',
@@ -43,8 +39,7 @@ WHO_LET_THE_SOUND = (
         'B4e',
         'rs',
         'B4e',)
-#MODEL_LOAD_SOUND = ('C6w', 'c6w', 'C6w')
-#BEEP_SOUND = ('E6q', 'C6q')
+BEEP_SOUND = ('E6q', 'C6q')
 
 #FONT_FILE = '/usr/share/fonts/truetype/freefont/FreeSans.ttf'
 
@@ -61,12 +56,12 @@ def stopwatch(message):
         end = time.monotonic()
         logger.info('%s done. (%fs)', message, end - begin)
 
-def run_inference(num_frames, on_loaded):
+def run_inference(num_frames, on_loaded, threshold):
     """Yields (faces, (frame_width, frame_height)) tuples."""
     with CameraInference(inaturalist_classification.model(inaturalist_classification.BIRDS)) as inference: # Other options INSECTS and PLANTS
         on_loaded()
         for result in inference.run(num_frames):
-            yield face_detection.get_faces(result), (result.width, result.height)
+            yield inaturalist_classification.get_classes(result, top_k = 1, threshold = threshold)
 
 """
 def threshold_detector(low_threshold, high_threshold):
@@ -119,7 +114,7 @@ def svg_overlay(faces, frame_size, joy_score):
 
 
 """
-def bird_detector(num_frames, image_format, image_folder, confidence_threshold):
+def bird_detector(num_frames, image_format, image_folder, confidence_threshold, preview_alpha):
     print("Don't forget to sudo systemctl stop joy_detection_demo")
     print("Detecting birds yo")
 
@@ -137,13 +132,12 @@ def bird_detector(num_frames, image_format, image_folder, confidence_threshold):
         player = stack.enter_context(Player(gpio=BUZZER_GPIO, bpm=60))
         photographer = stack.enter_context(Photographer(image_format, image_folder))
         animator = stack.enter_context(LedAnimator(leds))
-        animator.update_confidence(0.5)
+        animator.update_confidence(0.0)
         # Forced sensor mode, 1640x1232, full FoV. See:
         # https://picamera.readthedocs.io/en/release-1.13/fov.html#sensor-modes
         # This is the resolution inference run on.
         # Use half of that for video streaming (820x616).
         camera = stack.enter_context(PiCamera(sensor_mode=4, resolution=(820, 616)))
-        #photographer.shoot(camera)
         #stack.enter_context(PrivacyLed(leds))
 
         #server = None
@@ -155,33 +149,27 @@ def bird_detector(num_frames, image_format, image_folder, confidence_threshold):
             logger.info('Model loaded.')
             player.play(WHO_LET_THE_SOUND)
 
-        def take_photo():
-            logger.info('Button pressed.')
-            player.play(BEEP_SOUND)
-            photographer.shoot(camera)
             
-        """
         if preview_alpha > 0:
             camera.start_preview(alpha=preview_alpha)
 
-        board.button.when_pressed = take_photo
-
-        joy_moving_average = moving_average(10)
-        joy_moving_average.send(None)  # Initialize.
-        joy_threshold_detector = threshold_detector(JOY_SCORE_LOW, JOY_SCORE_HIGH)
-        joy_threshold_detector.send(None)  # Initialize.
-        """
-        for faces, frame_size in run_inference(num_frames, model_loaded):
-            photographer.shoot(camera)
-            #joy_score = joy_moving_average.send(average_joy_score(faces))
-            #animator.update_joy_score(joy_score)
-            #event = joy_threshold_detector.send(joy_score)
-            #if event == 'high':
-            #    logger.info('High joy detected.')
-            #    player.play(JOY_SOUND)
-            #elif event == 'low':
-            #    logger.info('Low joy detected.')
-            #    player.play(SAD_SOUND)
+        
+        current_bird = None
+        for classes in run_inference(num_frames, model_loaded, confidence_threshold):
+            if classes and classes[0][0] != 'background':
+                name = classes[0][0]
+                confidence = classes[0][1]
+                animator.update_confidence(confidence)
+                if name != current_bird:
+                    current_bird = name
+                    player.play(BEEP_SOUND)
+                    print("I see a '%s' with a confidence of %0.3f" % (name, confidence))
+                    photographer.shoot(camera, name[0:10])
+            else:
+                animator.update_confidence(0)
+                if current_bird:
+                    print("I see nothing")
+                current_bird = None
 
             if done.is_set():
                 break
@@ -213,7 +201,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        bird_detector(args.num_frames, args.image_format, args.image_folder, args.confidence_threshold)
+        bird_detector(args.num_frames, args.image_format, args.image_folder, args.confidence_threshold, preview_alpha=200)
         time.sleep(10)
     except KeyboardInterrupt:
         pass

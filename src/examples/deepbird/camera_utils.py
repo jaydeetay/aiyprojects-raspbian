@@ -32,24 +32,25 @@ class Photographer(Service):
         self._format = format
         self._folder = folder
 
-    def _make_filename(self, timestamp, annotated):
-        path = '%s/%s_annotated.%s' if annotated else '%s/%s.%s'
-        return os.path.expanduser(path % (self._folder, timestamp, self._format))
+    def _make_filename(self, timestamp, title):
+        path = '%s/%s_%s.%s' % (self._folder, title, timestamp, self._format) if title else '%s/%s.%s' % (self._folder, timestamp, self._format)
+        return os.path.expanduser(path)
 
     def process(self, message):
-        camera = message
+        camera = message[0]
+        title = message[1]
         timestamp = time.strftime('%Y-%m-%d_%H.%M.%S')
 
         stream = io.BytesIO()
         camera.capture(stream, format=self._format, use_video_port=True)
 
-        filename = self._make_filename(timestamp, annotated=False)
+        filename = self._make_filename(timestamp, title)
         stream.seek(0)
         with open(filename, 'wb') as file:
             file.write(stream.read())
 
-    def shoot(self, camera):
-        self.submit(camera)
+    def shoot(self, camera, title=None):
+        self.submit((camera, title))
 
 if __name__ == "__main__":
     print("How to save a camera shot")
