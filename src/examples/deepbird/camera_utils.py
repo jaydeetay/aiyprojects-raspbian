@@ -53,12 +53,12 @@ class Photographer(Service):
 
 if __name__ == "__main__":
     print("How to save a camera shot")
-    print("(Need to run this directly on the Pi)")
     with PiCamera(sensor_mode=4, resolution=(820, 616)) as camera:
         
     # camera = stack.enter_context(PiCamera(sensor_mode=4, resolution=(820, 616)))
         with Photographer("jpeg", "/tmp") as photographer:
-            photographer.shoot(camera)
-            photographer.shoot(camera)
+            for i in range(4):
+                photographer.shoot(camera)
+                time.sleep(1)
 
     
