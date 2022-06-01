@@ -164,7 +164,7 @@ def bird_detector(num_frames, image_format, image_folder, confidence_threshold, 
                     current_bird = name
                     player.play(BEEP_SOUND)
                     print("I see a '%s' with a confidence of %0.3f" % (name, confidence))
-                    photographer.shoot(camera, name[0:10])
+                    photographer.shoot(camera, "%s:%0.2f" % (name[0:20], confidence))
             else:
                 animator.update_confidence(0)
                 if current_bird:
@@ -186,11 +186,11 @@ def main():
     parser.add_argument('--image_format', default='jpeg',
                         choices=('jpeg', 'bmp', 'png'),
                         help='Format of captured images')
-    parser.add_argument('--image_folder', default='/tmp',
+    parser.add_argument('--image_folder', default='~/birds',
                         help='Folder to save captured images')
     parser.add_argument('--blink_on_error', default=True, action='store_true',
                         help='Blink red if error occurred')
-    parser.add_argument('--confidence_threshold', default=0.5,
+    parser.add_argument('--confidence_threshold', default=0.6,
                         help='How confident it''s a bird before taking a pic?')
     #parser.add_argument('--enable_streaming', default=False, action='store_true',
     #                    help='Enable streaming server')
@@ -202,7 +202,6 @@ def main():
 
     try:
         bird_detector(args.num_frames, args.image_format, args.image_folder, args.confidence_threshold, preview_alpha=200)
-        time.sleep(10)
     except KeyboardInterrupt:
         pass
     except Exception:
