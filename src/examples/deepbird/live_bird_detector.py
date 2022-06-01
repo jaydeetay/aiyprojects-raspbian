@@ -190,7 +190,7 @@ def main():
                         help='Folder to save captured images')
     parser.add_argument('--blink_on_error', default=True, action='store_true',
                         help='Blink red if error occurred')
-    parser.add_argument('--confidence_threshold', default=0.6,
+    parser.add_argument('--confidence_threshold', default=0.6, type=float,
                         help='How confident it''s a bird before taking a pic?')
     #parser.add_argument('--enable_streaming', default=False, action='store_true',
     #                    help='Enable streaming server')
